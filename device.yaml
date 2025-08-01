@@ -168,138 +168,58 @@ MAIN_STATUS:
       start: 3
       base: bool
       description: "1: New data available, not yet read (cleared after read)"
-LS_DATA_IR_0:
+LS_DATA_IR:
   type: register
   address: 0x0A
-  size_bits: 8
-  reset_value: 0x00
-  description: "IR ADC measurement data, LSB"
+  size_bits: 24
+  byte_order: LE
+  reset_value: 0x000000
+  description: "IR ADC measurement data (20-bit, LSB aligned)"
   fields:
-    data:
+    ir_counts:
       base: uint
       start: 0
-      end: 8
-LS_DATA_IR_1:
-  type: register
-  address: 0x0B
-  size_bits: 8
-  reset_value: 0x00
-  description: "IR ADC measurement data, middle byte"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_DATA_IR_2:
-  type: register
-  address: 0x0C
-  size_bits: 8
-  reset_value: 0x00
-  description: "IR ADC measurement data, MSB (bits 3:0 only)"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_DATA_GREEN_0:
+      end: 20
+      description: "IR channel ADC measurement counts (13 to 20 bit resolution)"
+LS_DATA_GREEN:
   type: register
   address: 0x0D
-  size_bits: 8
-  reset_value: 0x00
-  description: "ALS/Green ADC measurement data, LSB"
+  size_bits: 24
+  byte_order: LE
+  reset_value: 0x000000
+  description: "ALS/Green ADC measurement data (20-bit, LSB aligned)"
   fields:
-    data:
+    green_counts:
       base: uint
       start: 0
-      end: 8
-LS_DATA_GREEN_1:
-  type: register
-  address: 0x0E
-  size_bits: 8
-  reset_value: 0x00
-  description: "ALS/Green ADC measurement data, middle byte"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_DATA_GREEN_2:
-  type: register
-  address: 0x0F
-  size_bits: 8
-  reset_value: 0x00
-  description: "ALS/Green ADC measurement data, MSB (bits 3:0 only)"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_DATA_BLUE_0:
+      end: 20
+      description: "ALS/Green channel ADC measurement counts (13 to 20 bit resolution)"
+LS_DATA_BLUE:
   type: register
   address: 0x10
-  size_bits: 8
-  reset_value: 0x00
-  description: "Blue ADC measurement data, LSB"
+  size_bits: 24
+  byte_order: LE
+  reset_value: 0x000000
+  description: "Blue ADC measurement data (20-bit, LSB aligned)"
   fields:
-    data:
+    blue_counts:
       base: uint
       start: 0
-      end: 8
-LS_DATA_BLUE_1:
-  type: register
-  address: 0x11
-  size_bits: 8
-  reset_value: 0x00
-  description: "Blue ADC measurement data, middle byte"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_DATA_BLUE_2:
-  type: register
-  address: 0x12
-  size_bits: 8
-  reset_value: 0x00
-  description: "Blue ADC measurement data, MSB (bits 3:0 only)"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_DATA_RED_0:
+      end: 20
+      description: "Blue channel ADC measurement counts (13 to 20 bit resolution)"
+LS_DATA_RED:
   type: register
   address: 0x13
-  size_bits: 8
-  reset_value: 0x00
-  description: "Red ADC measurement data, LSB"
+  size_bits: 24
+  byte_order: LE
+  reset_value: 0x000000
+  description: "Red ADC measurement data (20-bit, LSB aligned)"
   fields:
-    data:
+    red_counts:
       base: uint
       start: 0
-      end: 8
-LS_DATA_RED_1:
-  type: register
-  address: 0x14
-  size_bits: 8
-  reset_value: 0x00
-  description: "Red ADC measurement data, middle byte"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_DATA_RED_2:
-  type: register
-  address: 0x15
-  size_bits: 8
-  reset_value: 0x00
-  description: "Red ADC measurement data, MSB (bits 3:0 only)"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
+      end: 20
+      description: "Red channel ADC measurement counts (13 to 20 bit resolution)"
 INT_CFG:
   type: register
   address: 0x19
@@ -372,72 +292,32 @@ INT_PST:
         Consecutive8:
           value: 7
           description: "8 consecutive LS values out of threshold range assert an interrupt"
-LS_THRES_UP_0:
+LS_THRES_UP:
   type: register
   address: 0x21
-  size_bits: 8
-  reset_value: 0xFF
-  description: "LS upper interrupt threshold value, LSB"
+  size_bits: 24
+  byte_order: LE
+  reset_value: 0x0FFFFF
+  description: "LS upper interrupt threshold value (20-bit, LSB aligned)"
   fields:
-    data:
+    upper_threshold:
       base: uint
       start: 0
-      end: 8
-LS_THRES_UP_1:
-  type: register
-  address: 0x22
-  size_bits: 8
-  reset_value: 0xFF
-  description: "LS upper interrupt threshold value, middle byte"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_THRES_UP_2:
-  type: register
-  address: 0x23
-  size_bits: 8
-  reset_value: 0x0F
-  description: "LS upper interrupt threshold value, MSB (bits 3:0 only)"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_THRES_LOW_0:
+      end: 20
+      description: "Upper interrupt threshold value for LS channels"
+LS_THRES_LOW:
   type: register
   address: 0x24
-  size_bits: 8
-  reset_value: 0x00
-  description: "LS lower interrupt threshold value, LSB"
+  size_bits: 24
+  byte_order: LE
+  reset_value: 0x000000
+  description: "LS lower interrupt threshold value (20-bit, LSB aligned)"
   fields:
-    data:
+    lower_threshold:
       base: uint
       start: 0
-      end: 8
-LS_THRES_LOW_1:
-  type: register
-  address: 0x25
-  size_bits: 8
-  reset_value: 0x00
-  description: "LS lower interrupt threshold value, middle byte"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
-LS_THRES_LOW_2:
-  type: register
-  address: 0x26
-  size_bits: 8
-  reset_value: 0x00
-  description: "LS lower interrupt threshold value, MSB (bits 3:0 only)"
-  fields:
-    data:
-      base: uint
-      start: 0
-      end: 8
+      end: 20
+      description: "Lower interrupt threshold value for LS channels"
 LS_THRES_VAR:
   type: register
   address: 0x27
@@ -445,7 +325,7 @@ LS_THRES_VAR:
   reset_value: 0x00
   description: "LS variation interrupt threshold"
   fields:
-    LS_THRES_VAR:
+    variance_threshold:
       start: 0
       end: 3
       base: uint
@@ -482,11 +362,11 @@ DARK_COUNT_STORAGE_GREEN:
   size_bits: 8
   description: "Dark count storage for green/ALS channel (no defined reset value)"
   fields:
-    DARK_VALID:
+    valid:
       start: 3
       base: bool
-      description: "0: DARK_COUNT_GREEN is not valid, 1: DARK_COUNT_GREEN is valid"
-    DARK_COUNT_GREEN:
+      description: "0: Dark count is not valid, 1: Dark count is valid"
+    count:
       start: 0
       end: 3
       base: uint
