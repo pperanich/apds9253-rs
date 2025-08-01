@@ -1,0 +1,33 @@
+[package]
+name = "apds9253"
+version = "0.1.0"
+authors = ["Your Name <your.email@example.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Platform-agnostic Rust driver for the APDS-9253 digital RGB and ambient light sensor using device-driver toolkit"
+repository = "https://github.com/yourusername/apds9253-rs"
+documentation = "https://docs.rs/apds9253"
+readme = "README.md"
+keywords = ["rgb", "light", "sensor", "embedded-hal-driver", "no-std"]
+categories = ["embedded", "hardware-support", "no-std"]
+
+[dependencies]
+device-driver = { version = "1.0", default-features = false, features = ["yaml"] }
+embedded-hal = "1.0"
+embedded-hal-async = { version = "1.0", optional = true }
+defmt = { version = "0.3", optional = true }
+libm = "0.2"
+
+[features]
+default = []
+async = ["embedded-hal-async"]
+defmt-03 = ["dep:defmt", "device-driver/defmt-03"]
+
+[dev-dependencies]
+embedded-hal-mock = "0.11"
+tokio = { version = "1.0", features = ["full"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+

@@ -1,0 +1,99 @@
+[package]
+name = "hub75-rp-examples"
+version = "0.1.0"
+edition = "2021"
+resolver = "2"
+
+[dependencies]
+# Embassy dependencies
+embassy-executor = { version = "0.7", default-features = false, features = [
+  "arch-cortex-m",
+  "executor-thread",
+  "defmt",
+] }
+embassy-time = { version = "0.4", default-features = false, features = [
+  "defmt",
+  "defmt-timestamp-uptime",
+] }
+embassy-rp = { version = "0.6", default-features = false, features = [
+  "defmt",
+  "unstable-pac",
+  "time-driver",
+  "critical-section-impl",
+  "rp2040",
+] }
+embassy-futures = "0.1"
+embassy-sync = { version = "0.7", features = ["defmt"] }
+
+# HUB75 driver
+hub75 = { path = "../..", features = ["embedded-graphics", "defmt"] }
+
+# Graphics
+embedded-graphics = "0.8"
+
+# Utility dependencies
+heapless = "0.8"
+futures = { version = "0.3", default-features = false, features = [
+  "async-await",
+] }
+
+# Logging and debugging
+defmt = "1.0"
+defmt-rtt = "1.0"
+
+# Hardware abstraction
+cortex-m = { version = "0.7" }
+cortex-m-rt = "0.7"
+panic-halt = "1.0"
+
+# Random number generation (for animations)
+rand = { version = "0.9", default-features = false }
+rand_core = "0.9"
+rand_chacha = { version = "0.9", default-features = false }
+
+# RP2040-specific dependencies
+pio-proc = "0.3"
+pio = "0.3"
+
+[profile.release]
+debug = 2
+
+[features]
+default = []
+
+# Panel size presets (matching main crate)
+size-32x16 = ["hub75/size-32x16"]
+size-64x32 = ["hub75/size-64x32"]
+size-64x64 = ["hub75/size-64x64"]
+size-128x64 = ["hub75/size-128x64"]
+
+# Color depth options (matching main crate)
+color-4bit = ["hub75/color-4bit"]
+color-6bit = ["hub75/color-6bit"]
+color-8bit = ["hub75/color-8bit"]
+
+# Development board presets
+pico = []
+pico-w = []
+
+[[bin]]
+name = "comprehensive_demo"
+path = "src/bin/comprehensive_demo.rs"
+
+[[bin]]
+name = "basic_display"
+path = "src/bin/basic_display.rs"
+
+[[bin]]
+name = "animated_effects"
+path = "src/bin/animated_effects.rs"
+
+[[bin]]
+name = "performance_test"
+path = "src/bin/performance_test.rs"
+
+[[bin]]
+name = "pico_w_demo"
+path = "src/bin/pico_w_demo.rs"
+required-features = ["pico-w"]
+

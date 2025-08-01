@@ -1,0 +1,259 @@
+config:
+  register_address_type: u8
+  default_byte_order: LE
+  defmt_feature: defmt-03
+MAIN_CTRL:
+  type: register
+  address: 0x00
+  size_bits: 8
+  reset_value: 0x00
+  description: "Operation mode control, SW reset"
+  fields:
+    SAI_LS:
+      start: 5
+      base: bool
+      description: "Sleep after Interrupt for LS: When set, light sensor returns to standby after interrupt"
+    SW_RESET:
+      start: 4
+      base: bool
+      description: "Software reset: triggers immediate reset when set to 1"
+    RGB_MODE:
+      start: 2
+      base: bool
+      description: "0: ALS and IR channels activated, 1: All Light Sensor (RGB and IR) channels activated"
+    LS_EN:
+      start: 1
+      base: bool
+      description: "0: Ambient light sensor standby, 1: Light Sensor active"
+LS_MEAS_RATE:
+  type: register
+  address: 0x04
+  size_bits: 8
+  reset_value: 0x22
+  description: "LS measurement rate and resolution"
+  fields:
+    LS_RESOLUTION:
+      start: 4
+      end: 6
+      base: uint
+      description: "ADC resolution and integration time"
+    LS_MEASUREMENT_RATE:
+      start: 0
+      end: 2
+      base: uint
+      description: "Measurement repeat rate"
+LS_GAIN:
+  type: register
+  address: 0x05
+  size_bits: 8
+  reset_value: 0x01
+  description: "LS analog gain range"
+  fields:
+    LS_GAIN_RANGE:
+      start: 0
+      end: 2
+      base: uint
+      description: "Analog gain setting"
+PART_ID:
+  type: register
+  address: 0x06
+  size_bits: 8
+  reset_value: 0xC2
+  description: "Part number ID and revision ID"
+  fields:
+    PART_ID:
+      start: 4
+      end: 7
+      base: uint
+      description: "Part number ID"
+    REVISION_ID:
+      start: 0
+      end: 3
+      base: uint
+      description: "Revision ID of the component"
+MAIN_STATUS:
+  type: register
+  address: 0x07
+  size_bits: 8
+  reset_value: 0x20
+  description: "Power-on status, interrupt status, data status"
+  fields:
+    POWER_ON_STATUS:
+      start: 5
+      base: bool
+      description: "1: Part went through power-up event (cleared after read)"
+    LS_INTERRUPT_STATUS:
+      start: 4
+      base: bool
+      description: "1: Interrupt condition fulfilled (cleared after read)"
+    LS_DATA_STATUS:
+      start: 3
+      base: bool
+      description: "1: New data available, not yet read (cleared after read)"
+LS_DATA_IR_0:
+  type: register
+  address: 0x0A
+  size_bits: 8
+  reset_value: 0x00
+  description: "IR ADC measurement data, LSB"
+LS_DATA_IR_1:
+  type: register
+  address: 0x0B
+  size_bits: 8
+  reset_value: 0x00
+  description: "IR ADC measurement data, middle byte"
+LS_DATA_IR_2:
+  type: register
+  address: 0x0C
+  size_bits: 8
+  reset_value: 0x00
+  description: "IR ADC measurement data, MSB (bits 3:0 only)"
+LS_DATA_GREEN_0:
+  type: register
+  address: 0x0D
+  size_bits: 8
+  reset_value: 0x00
+  description: "ALS/Green ADC measurement data, LSB"
+LS_DATA_GREEN_1:
+  type: register
+  address: 0x0E
+  size_bits: 8
+  reset_value: 0x00
+  description: "ALS/Green ADC measurement data, middle byte"
+LS_DATA_GREEN_2:
+  type: register
+  address: 0x0F
+  size_bits: 8
+  reset_value: 0x00
+  description: "ALS/Green ADC measurement data, MSB (bits 3:0 only)"
+LS_DATA_BLUE_0:
+  type: register
+  address: 0x10
+  size_bits: 8
+  reset_value: 0x00
+  description: "Blue ADC measurement data, LSB"
+LS_DATA_BLUE_1:
+  type: register
+  address: 0x11
+  size_bits: 8
+  reset_value: 0x00
+  description: "Blue ADC measurement data, middle byte"
+LS_DATA_BLUE_2:
+  type: register
+  address: 0x12
+  size_bits: 8
+  reset_value: 0x00
+  description: "Blue ADC measurement data, MSB (bits 3:0 only)"
+LS_DATA_RED_0:
+  type: register
+  address: 0x13
+  size_bits: 8
+  reset_value: 0x00
+  description: "Red ADC measurement data, LSB"
+LS_DATA_RED_1:
+  type: register
+  address: 0x14
+  size_bits: 8
+  reset_value: 0x00
+  description: "Red ADC measurement data, middle byte"
+LS_DATA_RED_2:
+  type: register
+  address: 0x15
+  size_bits: 8
+  reset_value: 0x00
+  description: "Red ADC measurement data, MSB (bits 3:0 only)"
+INT_CFG:
+  type: register
+  address: 0x19
+  size_bits: 8
+  reset_value: 0x10
+  description: "Interrupt configuration"
+  fields:
+    LS_INT_SEL:
+      start: 4
+      end: 5
+      base: uint
+      description: "Light sensor interrupt source channel selection"
+    LS_VAR_MODE:
+      start: 3
+      base: bool
+      description: "0: LS threshold interrupt mode, 1: LS variation interrupt mode"
+    LS_INT_EN:
+      start: 2
+      base: bool
+      description: "0: LS Interrupt disabled, 1: LS Interrupt enabled"
+INT_PST:
+  type: register
+  address: 0x1A
+  size_bits: 8
+  reset_value: 0x00
+  description: "Interrupt persistence"
+  fields:
+    LS_PERSIST:
+      start: 4
+      end: 6
+      base: uint
+      description: "Number of consecutive LS interrupt events before interrupt is asserted"
+LS_THRES_UP_0:
+  type: register
+  address: 0x21
+  size_bits: 8
+  reset_value: 0xFF
+  description: "LS upper interrupt threshold value, LSB"
+LS_THRES_UP_1:
+  type: register
+  address: 0x22
+  size_bits: 8
+  reset_value: 0xFF
+  description: "LS upper interrupt threshold value, middle byte"
+LS_THRES_UP_2:
+  type: register
+  address: 0x23
+  size_bits: 8
+  reset_value: 0x0F
+  description: "LS upper interrupt threshold value, MSB (bits 3:0 only)"
+LS_THRES_LOW_0:
+  type: register
+  address: 0x24
+  size_bits: 8
+  reset_value: 0x00
+  description: "LS lower interrupt threshold value, LSB"
+LS_THRES_LOW_1:
+  type: register
+  address: 0x25
+  size_bits: 8
+  reset_value: 0x00
+  description: "LS lower interrupt threshold value, middle byte"
+LS_THRES_LOW_2:
+  type: register
+  address: 0x26
+  size_bits: 8
+  reset_value: 0x00
+  description: "LS lower interrupt threshold value, MSB (bits 3:0 only)"
+LS_THRES_VAR:
+  type: register
+  address: 0x27
+  size_bits: 8
+  reset_value: 0x00
+  description: "LS variation interrupt threshold"
+  fields:
+    LS_THRES_VAR:
+      start: 0
+      end: 2
+      base: uint
+      description: "Variance threshold for variation interrupt mode"
+DARK_COUNT_STORAGE_GREEN:
+  type: register
+  address: 0x29
+  size_bits: 8
+  description: "Dark count storage for green/ALS channel (no defined reset value)"
+  fields:
+    DARK_VALID:
+      start: 3
+      base: bool
+      description: "0: DARK_COUNT_GREEN is not valid, 1: DARK_COUNT_GREEN is valid"
+    DARK_COUNT_GREEN:
+      start: 0
+      end: 2
+      base: uint
+      description: "Dark count of green channel tested at 400ms and 18x gain"
