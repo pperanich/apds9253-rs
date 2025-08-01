@@ -85,7 +85,7 @@ use apds9253::{InterruptSource, Persistence};
 sensor.configure_interrupt(
     InterruptSource::Green,
     1000,    // Low threshold
-    50000,   // High threshold  
+    50000,   // High threshold
     Persistence::Consecutive2, // Require 2 consecutive readings
 )?;
 
@@ -102,7 +102,7 @@ if sensor.check_interrupt()? {
 ### Gain Settings
 
 | Gain | Use Case |
-|------|----------|
+| --------- | ----------------------------------- |
 | `Gain1x` | Bright light conditions |
 | `Gain3x` | Normal indoor lighting (default) |
 | `Gain6x` | Dim lighting |
@@ -112,7 +112,7 @@ if sensor.check_interrupt()? {
 ### Resolution and Integration Time
 
 | Resolution | Integration Time | Use Case |
-|------------|------------------|----------|
+| ---------------- | ---------------- | -------------------------------- |
 | `Bits13_3_125ms` | 3.125ms | Fast measurements, low precision |
 | `Bits16_25ms` | 25ms | Quick measurements |
 | `Bits17_50ms` | 50ms | Balanced speed/precision |
@@ -232,10 +232,6 @@ match sensor.read_rgb_data() {
 }
 ```
 
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
 ### Development Setup
 
 ```bash
@@ -252,8 +248,8 @@ cargo run --example basic_rgb
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
 at your option.
 
