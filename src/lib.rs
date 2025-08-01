@@ -34,8 +34,8 @@
 //! sensor.init().unwrap();
 //!
 //! // Configure measurement settings
-//! sensor.set_gain(LsGainRange::Gain3x as u8).unwrap();
-//! sensor.set_resolution(LsResolution::Bits18_100ms as u8).unwrap();
+//! sensor.set_gain(LsGainRange::Gain3X as u8).unwrap();
+//! sensor.set_resolution(LsResolution::Bits18100Ms as u8).unwrap();
 //!
 //! // Enable RGB mode
 //! sensor.enable_rgb_mode(true).unwrap();
@@ -76,8 +76,8 @@
 //! sensor.init_async().await.unwrap();
 //!
 //! // Configure measurement settings
-//! sensor.set_gain_async(LsGainRange::Gain3x as u8).await.unwrap();
-//! sensor.set_resolution_async(LsResolution::Bits18_100ms as u8).await.unwrap();
+//! sensor.set_gain_async(LsGainRange::Gain3X as u8).await.unwrap();
+//! sensor.set_resolution_async(LsResolution::Bits18100Ms as u8).await.unwrap();
 //!
 //! // Enable RGB mode
 //! sensor.enable_rgb_mode_async(true).await.unwrap();
@@ -106,118 +106,11 @@ use embedded_hal::i2c::I2c;
 #[cfg(feature = "async")]
 use embedded_hal_async::i2c::I2c as AsyncI2c;
 
+pub mod ll;
+pub use ll::{LsGainRange, LsIntSel, LsMeasurementRate, LsPersist, LsResolution, LsThresVar};
+
 /// I2C address of the APDS-9253 sensor
-pub const I2C_ADDRESS: u8 = 0x52;
-
-/// Light sensor gain range settings
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
-pub enum LsGainRange {
-    /// 1x gain
-    Gain1x = 0b000,
-    /// 3x gain
-    Gain3x = 0b001,
-    /// 6x gain
-    Gain6x = 0b010,
-    /// 9x gain
-    Gain9x = 0b011,
-    /// 18x gain
-    Gain18x = 0b100,
-}
-
-/// Light sensor resolution and integration time settings
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
-pub enum LsResolution {
-    /// 20-bit resolution, 400ms integration time
-    Bits20_400ms = 0b000,
-    /// 19-bit resolution, 200ms integration time
-    Bits19_200ms = 0b001,
-    /// 18-bit resolution, 100ms integration time
-    Bits18_100ms = 0b010,
-    /// 17-bit resolution, 50ms integration time
-    Bits17_50ms = 0b011,
-    /// 16-bit resolution, 25ms integration time
-    Bits16_25ms = 0b100,
-    /// 13-bit resolution, 3.125ms integration time
-    Bits13_3_125ms = 0b101,
-}
-
-/// Light sensor measurement rate settings
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
-pub enum LsMeasurementRate {
-    /// 25ms measurement rate
-    Ms25 = 0b000,
-    /// 50ms measurement rate
-    Ms50 = 0b001,
-    /// 100ms measurement rate
-    Ms100 = 0b010,
-    /// 200ms measurement rate
-    Ms200 = 0b011,
-    /// 500ms measurement rate
-    Ms500 = 0b100,
-    /// 1000ms measurement rate
-    Ms1000 = 0b101,
-}
-
-/// Light sensor interrupt source selection
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
-pub enum LsIntSel {
-    /// IR channel
-    IR = 0b00,
-    /// Green channel
-    Green = 0b01,
-    /// Red channel
-    Red = 0b10,
-    /// Blue channel
-    Blue = 0b11,
-}
-
-/// Light sensor interrupt persistence settings
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
-pub enum LsPersist {
-    /// Every measurement triggers interrupt
-    Every = 0b000,
-    /// 2 consecutive measurements
-    Consecutive2 = 0b001,
-    /// 3 consecutive measurements
-    Consecutive3 = 0b010,
-    /// 4 consecutive measurements
-    Consecutive4 = 0b011,
-    /// 5 consecutive measurements
-    Consecutive5 = 0b100,
-    /// 6 consecutive measurements
-    Consecutive6 = 0b101,
-    /// 7 consecutive measurements
-    Consecutive7 = 0b110,
-    /// 8 consecutive measurements
-    Consecutive8 = 0b111,
-}
-
-/// Light sensor variance threshold settings
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
-pub enum LsThresVar {
-    /// 8 counts variance threshold
-    Counts8 = 0b000,
-    /// 16 counts variance threshold
-    Counts16 = 0b001,
-    /// 32 counts variance threshold
-    Counts32 = 0b010,
-    /// 64 counts variance threshold
-    Counts64 = 0b011,
-    /// 128 counts variance threshold
-    Counts128 = 0b100,
-    /// 256 counts variance threshold
-    Counts256 = 0b101,
-    /// 512 counts variance threshold
-    Counts512 = 0b110,
-    /// 1024 counts variance threshold
-    Counts1024 = 0b111,
-}
+pub const I2C_ADDRESS: u8 = ll::I2C_ADDRESS;
 
 /// RGB and IR measurement data
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -280,29 +173,22 @@ pub enum Error<E> {
     BlockReadFailed,
 }
 
-// Register addresses
-const MAIN_CTRL: u8 = 0x00;
-const LS_MEAS_RATE: u8 = 0x04;
-const LS_GAIN: u8 = 0x05;
-const PART_ID: u8 = 0x06;
-const MAIN_STATUS: u8 = 0x07;
-const LS_DATA_IR_0: u8 = 0x0A;
-const LS_DATA_GREEN_0: u8 = 0x0D;
-const LS_DATA_BLUE_0: u8 = 0x10;
-const LS_DATA_RED_0: u8 = 0x13;
-const INT_CFG: u8 = 0x19;
-const INT_PST: u8 = 0x1A;
-const LS_THRES_UP_0: u8 = 0x21;
-const LS_THRES_LOW_0: u8 = 0x24;
-const LS_THRES_VAR: u8 = 0x27;
+// Implement From conversion for ll::DeviceInterfaceError
+impl<E> From<ll::DeviceInterfaceError<E>> for Error<E> {
+    fn from(error: ll::DeviceInterfaceError<E>) -> Self {
+        match error {
+            ll::DeviceInterfaceError::I2c(e) => Error::I2c(e),
+        }
+    }
+}
 
 /// High-level APDS-9253 driver
 pub struct Apds9253<I2C, Delay = ()> {
-    i2c: I2C,
+    device: ll::Device<ll::DeviceInterface<I2C>>,
     delay: Delay,
     // Device state tracking
-    current_gain: Option<u8>,
-    current_resolution: Option<u8>,
+    current_gain: Option<LsGainRange>,
+    current_resolution: Option<LsResolution>,
 }
 
 impl<I2C, E> Apds9253<I2C, ()>
@@ -312,7 +198,7 @@ where
     /// Create a new APDS-9253 driver instance without delay support
     pub fn new(i2c: I2C) -> Self {
         Self {
-            i2c,
+            device: ll::Device::new(ll::DeviceInterface { i2c }),
             delay: (),
             current_gain: None,
             current_resolution: None,
@@ -328,7 +214,7 @@ where
     /// Create a new APDS-9253 driver instance with delay support
     pub fn new_with_delay(i2c: I2C, delay: Delay) -> Self {
         Self {
-            i2c,
+            device: ll::Device::new(ll::DeviceInterface { i2c }),
             delay,
             current_gain: None,
             current_resolution: None,
@@ -343,110 +229,107 @@ where
     /// Initialize the sensor with default settings
     pub fn init(&mut self) -> Result<(), Error<E>> {
         // Verify device ID
-        let part_id = self.read_register(PART_ID)?;
+        let part_id_reg = self.device.part_id().read()?;
+        let part_id = part_id_reg.part_id();
         let expected_part_id = 0xC;
-        if (part_id >> 4) != expected_part_id {
+        if part_id != expected_part_id {
             return Err(Error::InvalidDeviceId {
                 expected: expected_part_id,
-                found: part_id >> 4,
+                found: part_id,
             });
         }
 
         // Reset the device
-        self.write_register(MAIN_CTRL, 0x10)?; // SW_RESET bit
+        self.device
+            .main_ctrl()
+            .modify(|reg| reg.set_sw_reset(true))?;
 
         // Set default configuration
-        self.set_gain(LsGainRange::Gain3x as u8)?;
-        self.set_resolution(LsResolution::Bits18_100ms as u8)?;
-        self.set_measurement_rate(LsMeasurementRate::Ms100 as u8)?;
+        self.set_gain(LsGainRange::Gain3X)?;
+        self.set_resolution(LsResolution::Bits18100Ms)?;
+        self.set_measurement_rate(LsMeasurementRate::Ms100)?;
 
         Ok(())
     }
 
     /// Enable or disable the light sensor
     pub fn enable(&mut self, enable: bool) -> Result<(), Error<E>> {
-        let mut ctrl = self.read_register(MAIN_CTRL)?;
-        if enable {
-            ctrl |= 0x02; // LS_EN bit
-        } else {
-            ctrl &= !0x02;
-        }
-        self.write_register(MAIN_CTRL, ctrl)
+        self.device
+            .main_ctrl()
+            .modify(|reg| reg.set_ls_en(enable))?;
+        Ok(())
     }
 
     /// Enable or disable RGB mode (all channels vs ALS+IR only)
     pub fn enable_rgb_mode(&mut self, enable: bool) -> Result<(), Error<E>> {
-        let mut ctrl = self.read_register(MAIN_CTRL)?;
-        if enable {
-            ctrl |= 0x04; // RGB_MODE bit
-        } else {
-            ctrl &= !0x04;
-        }
-        self.write_register(MAIN_CTRL, ctrl)
+        self.device
+            .main_ctrl()
+            .modify(|reg| reg.set_rgb_mode(enable))?;
+        Ok(())
     }
 
     /// Set the analog gain
-    pub fn set_gain(&mut self, gain: u8) -> Result<(), Error<E>> {
-        let result = self.write_register(LS_GAIN, gain & 0x07);
-        if result.is_ok() {
-            self.current_gain = Some(gain);
-        }
-        result
+    pub fn set_gain(&mut self, gain: LsGainRange) -> Result<(), Error<E>> {
+        self.device
+            .ls_gain()
+            .modify(|reg| reg.set_ls_gain_range(gain))?;
+        self.current_gain = Some(gain);
+        Ok(())
     }
 
     /// Set the ADC resolution and integration time
-    pub fn set_resolution(&mut self, resolution: u8) -> Result<(), Error<E>> {
-        let mut meas_rate = self.read_register(LS_MEAS_RATE)?;
-        meas_rate = (meas_rate & 0x8F) | ((resolution & 0x07) << 4);
-        let result = self.write_register(LS_MEAS_RATE, meas_rate);
-        if result.is_ok() {
-            self.current_resolution = Some(resolution);
-        }
-        result
+    pub fn set_resolution(&mut self, resolution: LsResolution) -> Result<(), Error<E>> {
+        self.device
+            .ls_meas_rate()
+            .modify(|reg| reg.set_ls_resolution(resolution))?;
+        self.current_resolution = Some(resolution);
+        Ok(())
     }
 
     /// Set the measurement rate
-    pub fn set_measurement_rate(&mut self, rate: u8) -> Result<(), Error<E>> {
-        let mut meas_rate = self.read_register(LS_MEAS_RATE)?;
-        meas_rate = (meas_rate & 0xF8) | (rate & 0x07);
-        self.write_register(LS_MEAS_RATE, meas_rate)
+    pub fn set_measurement_rate(&mut self, rate: LsMeasurementRate) -> Result<(), Error<E>> {
+        self.device
+            .ls_meas_rate()
+            .modify(|reg| reg.set_ls_measurement_rate(rate))?;
+        Ok(())
     }
 
     /// Check if new data is available
     pub fn is_data_ready(&mut self) -> Result<bool, Error<E>> {
-        let status = self.read_register(MAIN_STATUS)?;
-        Ok((status & 0x08) != 0) // LS_DATA_STATUS bit
+        let status = self.device.main_status().read()?;
+        Ok(status.ls_data_status())
     }
 
-    /// Read raw RGB and IR data using block read for data coherency
+    /// Read raw RGB and IR data using individual register reads for data coherency
     pub fn read_rgb_data(&mut self) -> Result<RgbData, Error<E>> {
         // Check if data is ready
         if !self.is_data_ready()? {
             return Err(Error::NotReady);
         }
 
-        // Perform block read from 0x0A to 0x15 (IR, Green, Blue, Red data registers)
-        let mut data_buffer = [0u8; 12]; // 4 channels × 3 bytes each
-        self.i2c
-            .write_read(I2C_ADDRESS, &[LS_DATA_IR_0], &mut data_buffer)
-            .map_err(Error::I2c)?;
+        // Read IR data (3 bytes)
+        let ir_0 = self.device.ls_data_ir_0().read()?.data();
+        let ir_1 = self.device.ls_data_ir_1().read()?.data();
+        let ir_2 = self.device.ls_data_ir_2().read()?.data();
+        let ir = (ir_0 as u32) | ((ir_1 as u32) << 8) | (((ir_2 as u32) & 0x0F) << 16);
 
-        // Extract 20-bit values from the block read data
-        let ir = (data_buffer[0] as u32)
-            | ((data_buffer[1] as u32) << 8)
-            | (((data_buffer[2] as u32) & 0x0F) << 16);
+        // Read Green data (3 bytes)
+        let green_0 = self.device.ls_data_green_0().read()?.data();
+        let green_1 = self.device.ls_data_green_1().read()?.data();
+        let green_2 = self.device.ls_data_green_2().read()?.data();
+        let green = (green_0 as u32) | ((green_1 as u32) << 8) | (((green_2 as u32) & 0x0F) << 16);
 
-        let green = (data_buffer[3] as u32)
-            | ((data_buffer[4] as u32) << 8)
-            | (((data_buffer[5] as u32) & 0x0F) << 16);
+        // Read Blue data (3 bytes)
+        let blue_0 = self.device.ls_data_blue_0().read()?.data();
+        let blue_1 = self.device.ls_data_blue_1().read()?.data();
+        let blue_2 = self.device.ls_data_blue_2().read()?.data();
+        let blue = (blue_0 as u32) | ((blue_1 as u32) << 8) | (((blue_2 as u32) & 0x0F) << 16);
 
-        let blue = (data_buffer[6] as u32)
-            | ((data_buffer[7] as u32) << 8)
-            | (((data_buffer[8] as u32) & 0x0F) << 16);
-
-        let red = (data_buffer[9] as u32)
-            | ((data_buffer[10] as u32) << 8)
-            | (((data_buffer[11] as u32) & 0x0F) << 16);
+        // Read Red data (3 bytes)
+        let red_0 = self.device.ls_data_red_0().read()?.data();
+        let red_1 = self.device.ls_data_red_1().read()?.data();
+        let red_2 = self.device.ls_data_red_2().read()?.data();
+        let red = (red_0 as u32) | ((red_1 as u32) << 8) | (((red_2 as u32) & 0x0F) << 16);
 
         Ok(RgbData {
             red,
@@ -462,8 +345,8 @@ where
         let gain = match self.current_gain {
             Some(gain) => gain,
             None => {
-                let gain_reg = self.read_register(LS_GAIN)?;
-                let gain = gain_reg & 0x07;
+                let gain_reg = self.device.ls_gain().read()?;
+                let gain = gain_reg.ls_gain_range();
                 self.current_gain = Some(gain);
                 gain
             }
@@ -472,36 +355,57 @@ where
         let resolution = match self.current_resolution {
             Some(resolution) => resolution,
             None => {
-                let meas_rate = self.read_register(LS_MEAS_RATE)?;
-                let resolution = (meas_rate >> 4) & 0x07;
+                let meas_rate = self.device.ls_meas_rate().read()?;
+                let resolution = meas_rate.ls_resolution();
                 self.current_resolution = Some(resolution);
                 resolution
             }
         };
 
-        // Datasheet-specified lux per count lookup table
-        // [gain_index][resolution_index] = lux_per_count
-        const LUX_TABLE: [[f32; 6]; 5] = [
+        // Calculate lux per count based on gain and resolution settings
+        let lux_per_count = match (gain, resolution) {
             // Gain 1x
-            [2.193, 1.099, 0.548, 0.273, 0.136, 0.0], // 25ms, 50ms, 100ms, 200ms, 400ms, 3.125ms (not in table)
+            (LsGainRange::Gain1X, LsResolution::Bits1625Ms) => 2.193,
+            (LsGainRange::Gain1X, LsResolution::Bits1750Ms) => 1.099,
+            (LsGainRange::Gain1X, LsResolution::Bits18100Ms) => 0.548,
+            (LsGainRange::Gain1X, LsResolution::Bits19200Ms) => 0.273,
+            (LsGainRange::Gain1X, LsResolution::Bits20400Ms) => 0.136,
+            (LsGainRange::Gain1X, LsResolution::Bits133125Ms) => 2.193 * 8.0, // Approximation
+
             // Gain 3x
-            [0.722, 0.359, 0.180, 0.090, 0.045, 0.0],
+            (LsGainRange::Gain3X, LsResolution::Bits1625Ms) => 0.722,
+            (LsGainRange::Gain3X, LsResolution::Bits1750Ms) => 0.359,
+            (LsGainRange::Gain3X, LsResolution::Bits18100Ms) => 0.180,
+            (LsGainRange::Gain3X, LsResolution::Bits19200Ms) => 0.090,
+            (LsGainRange::Gain3X, LsResolution::Bits20400Ms) => 0.045,
+            (LsGainRange::Gain3X, LsResolution::Bits133125Ms) => 0.722 * 8.0,
+
             // Gain 6x
-            [0.360, 0.179, 0.090, 0.045, 0.022, 0.0],
+            (LsGainRange::Gain6X, LsResolution::Bits1625Ms) => 0.360,
+            (LsGainRange::Gain6X, LsResolution::Bits1750Ms) => 0.179,
+            (LsGainRange::Gain6X, LsResolution::Bits18100Ms) => 0.090,
+            (LsGainRange::Gain6X, LsResolution::Bits19200Ms) => 0.045,
+            (LsGainRange::Gain6X, LsResolution::Bits20400Ms) => 0.022,
+            (LsGainRange::Gain6X, LsResolution::Bits133125Ms) => 0.360 * 8.0,
+
             // Gain 9x
-            [0.239, 0.119, 0.059, 0.030, 0.015, 0.0],
+            (LsGainRange::Gain9X, LsResolution::Bits1625Ms) => 0.239,
+            (LsGainRange::Gain9X, LsResolution::Bits1750Ms) => 0.119,
+            (LsGainRange::Gain9X, LsResolution::Bits18100Ms) => 0.059,
+            (LsGainRange::Gain9X, LsResolution::Bits19200Ms) => 0.030,
+            (LsGainRange::Gain9X, LsResolution::Bits20400Ms) => 0.015,
+            (LsGainRange::Gain9X, LsResolution::Bits133125Ms) => 0.239 * 8.0,
+
             // Gain 18x
-            [0.117, 0.059, 0.029, 0.015, 0.007, 0.0],
-        ];
+            (LsGainRange::Gain18X, LsResolution::Bits1625Ms) => 0.117,
+            (LsGainRange::Gain18X, LsResolution::Bits1750Ms) => 0.059,
+            (LsGainRange::Gain18X, LsResolution::Bits18100Ms) => 0.029,
+            (LsGainRange::Gain18X, LsResolution::Bits19200Ms) => 0.015,
+            (LsGainRange::Gain18X, LsResolution::Bits20400Ms) => 0.007,
+            (LsGainRange::Gain18X, LsResolution::Bits133125Ms) => 0.117 * 8.0,
 
-        let gain_index = core::cmp::min(gain as usize, 4);
-        let resolution_index = core::cmp::min(resolution as usize, 5);
-
-        let lux_per_count = if resolution_index == 5 {
-            // For 3.125ms, use approximation based on 25ms value
-            LUX_TABLE[gain_index][0] * 8.0 // Rough scaling
-        } else {
-            LUX_TABLE[gain_index][resolution_index]
+            // Default for reserved values
+            _ => 0.180, // Default to 3x gain, 100ms values
         };
 
         // Calculate lux using green channel (ALS channel)
@@ -548,28 +452,13 @@ where
 
     /// Get the device part ID and revision
     pub fn get_device_id(&mut self) -> Result<(u8, u8), Error<E>> {
-        let part_id = self.read_register(PART_ID)?;
-        Ok((part_id >> 4, part_id & 0x0F))
+        let part_id_reg = self.device.part_id().read()?;
+        Ok((part_id_reg.part_id(), part_id_reg.revision_id()))
     }
 
-    /// Destroy the driver and return the I2C interface
-    pub fn destroy(self) -> I2C {
-        self.i2c
-    }
-
-    // Helper methods for register access
-    fn read_register(&mut self, address: u8) -> Result<u8, Error<E>> {
-        let mut buffer = [0u8; 1];
-        self.i2c
-            .write_read(I2C_ADDRESS, &[address], &mut buffer)
-            .map_err(Error::I2c)?;
-        Ok(buffer[0])
-    }
-
-    fn write_register(&mut self, address: u8, value: u8) -> Result<(), Error<E>> {
-        self.i2c
-            .write(I2C_ADDRESS, &[address, value])
-            .map_err(Error::I2c)
+    /// Get a reference to the underlying device for advanced operations
+    pub fn device(&mut self) -> &mut ll::Device<ll::DeviceInterface<I2C>> {
+        &mut self.device
     }
 }
 
@@ -581,7 +470,7 @@ where
     /// Create a new APDS-9253 driver instance without delay support (async version)
     pub fn new_async(i2c: I2C) -> Self {
         Self {
-            i2c,
+            device: ll::Device::new(ll::DeviceInterface { i2c }),
             delay: (),
             current_gain: None,
             current_resolution: None,
@@ -598,7 +487,7 @@ where
     /// Create a new APDS-9253 driver instance with delay support (async version)
     pub fn new_async_with_delay(i2c: I2C, delay: Delay) -> Self {
         Self {
-            i2c,
+            device: ll::Device::new(ll::DeviceInterface { i2c }),
             delay,
             current_gain: None,
             current_resolution: None,
@@ -627,8 +516,8 @@ where
         self.write_register_async(MAIN_CTRL, 0x10).await?; // SW_RESET bit
 
         // Set default configuration
-        self.set_gain_async(LsGainRange::Gain3x as u8).await?;
-        self.set_resolution_async(LsResolution::Bits18_100ms as u8)
+        self.set_gain_async(LsGainRange::Gain3X as u8).await?;
+        self.set_resolution_async(LsResolution::Bits18100Ms as u8)
             .await?;
         self.set_measurement_rate_async(LsMeasurementRate::Ms100 as u8)
             .await?;
@@ -702,8 +591,7 @@ where
         let mut data_buffer = [0u8; 12]; // 4 channels × 3 bytes each
         self.i2c
             .write_read(I2C_ADDRESS, &[LS_DATA_IR_0], &mut data_buffer)
-            .await
-            .map_err(Error::I2c)?;
+            .await?;
 
         // Extract 20-bit values from the block read data
         let ir = (data_buffer[0] as u32)
@@ -753,29 +641,50 @@ where
             }
         };
 
-        // Datasheet-specified lux per count lookup table
-        // [gain_index][resolution_index] = lux_per_count
-        const LUX_TABLE: [[f32; 6]; 5] = [
+        // Calculate lux per count based on gain and resolution settings
+        let lux_per_count = match (gain, resolution) {
             // Gain 1x
-            [2.193, 1.099, 0.548, 0.273, 0.136, 0.0], // 25ms, 50ms, 100ms, 200ms, 400ms, 3.125ms (not in table)
+            (LsGainRange::Gain1X, LsResolution::Bits1625Ms) => 2.193,
+            (LsGainRange::Gain1X, LsResolution::Bits1750Ms) => 1.099,
+            (LsGainRange::Gain1X, LsResolution::Bits18100Ms) => 0.548,
+            (LsGainRange::Gain1X, LsResolution::Bits19200Ms) => 0.273,
+            (LsGainRange::Gain1X, LsResolution::Bits20400Ms) => 0.136,
+            (LsGainRange::Gain1X, LsResolution::Bits133125Ms) => 2.193 * 8.0, // Approximation
+
             // Gain 3x
-            [0.722, 0.359, 0.180, 0.090, 0.045, 0.0],
+            (LsGainRange::Gain3X, LsResolution::Bits1625Ms) => 0.722,
+            (LsGainRange::Gain3X, LsResolution::Bits1750Ms) => 0.359,
+            (LsGainRange::Gain3X, LsResolution::Bits18100Ms) => 0.180,
+            (LsGainRange::Gain3X, LsResolution::Bits19200Ms) => 0.090,
+            (LsGainRange::Gain3X, LsResolution::Bits20400Ms) => 0.045,
+            (LsGainRange::Gain3X, LsResolution::Bits133125Ms) => 0.722 * 8.0,
+
             // Gain 6x
-            [0.360, 0.179, 0.090, 0.045, 0.022, 0.0],
+            (LsGainRange::Gain6X, LsResolution::Bits1625Ms) => 0.360,
+            (LsGainRange::Gain6X, LsResolution::Bits1750Ms) => 0.179,
+            (LsGainRange::Gain6X, LsResolution::Bits18100Ms) => 0.090,
+            (LsGainRange::Gain6X, LsResolution::Bits19200Ms) => 0.045,
+            (LsGainRange::Gain6X, LsResolution::Bits20400Ms) => 0.022,
+            (LsGainRange::Gain6X, LsResolution::Bits133125Ms) => 0.360 * 8.0,
+
             // Gain 9x
-            [0.239, 0.119, 0.059, 0.030, 0.015, 0.0],
+            (LsGainRange::Gain9X, LsResolution::Bits1625Ms) => 0.239,
+            (LsGainRange::Gain9X, LsResolution::Bits1750Ms) => 0.119,
+            (LsGainRange::Gain9X, LsResolution::Bits18100Ms) => 0.059,
+            (LsGainRange::Gain9X, LsResolution::Bits19200Ms) => 0.030,
+            (LsGainRange::Gain9X, LsResolution::Bits20400Ms) => 0.015,
+            (LsGainRange::Gain9X, LsResolution::Bits133125Ms) => 0.239 * 8.0,
+
             // Gain 18x
-            [0.117, 0.059, 0.029, 0.015, 0.007, 0.0],
-        ];
+            (LsGainRange::Gain18X, LsResolution::Bits1625Ms) => 0.117,
+            (LsGainRange::Gain18X, LsResolution::Bits1750Ms) => 0.059,
+            (LsGainRange::Gain18X, LsResolution::Bits18100Ms) => 0.029,
+            (LsGainRange::Gain18X, LsResolution::Bits19200Ms) => 0.015,
+            (LsGainRange::Gain18X, LsResolution::Bits20400Ms) => 0.007,
+            (LsGainRange::Gain18X, LsResolution::Bits133125Ms) => 0.117 * 8.0,
 
-        let gain_index = core::cmp::min(gain as usize, 4);
-        let resolution_index = core::cmp::min(resolution as usize, 5);
-
-        let lux_per_count = if resolution_index == 5 {
-            // For 3.125ms, use approximation based on 25ms value
-            LUX_TABLE[gain_index][0] * 8.0 // Rough scaling
-        } else {
-            LUX_TABLE[gain_index][resolution_index]
+            // Default for reserved values
+            _ => 0.180, // Default to 3x gain, 100ms values
         };
 
         // Calculate lux using green channel (ALS channel)
@@ -801,7 +710,7 @@ where
         // Wait for measurement to complete based on current resolution
         let wait_time_ms = match self
             .current_resolution
-            .unwrap_or(LsResolution::Bits18_100ms as u8)
+            .unwrap_or(LsResolution::Bits18100Ms as u8)
         {
             5 => 4,   // Bits13_3_125ms
             4 => 30,  // Bits16_25ms
@@ -823,16 +732,12 @@ where
         let mut buffer = [0u8; 1];
         self.i2c
             .write_read(I2C_ADDRESS, &[address], &mut buffer)
-            .await
-            .map_err(Error::I2c)?;
+            .await?;
         Ok(buffer[0])
     }
 
     async fn write_register_async(&mut self, address: u8, value: u8) -> Result<(), Error<E>> {
-        self.i2c
-            .write(I2C_ADDRESS, &[address, value])
-            .await
-            .map_err(Error::I2c)
+        self.i2c.write(I2C_ADDRESS, &[address, value]).await
     }
 }
 

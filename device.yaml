@@ -34,14 +34,66 @@ LS_MEAS_RATE:
   fields:
     LS_RESOLUTION:
       start: 4
-      end: 6
+      end: 7
       base: uint
       description: "ADC resolution and integration time"
+      conversion:
+        name: LsResolution
+        Bits20_400ms:
+          value: 0
+          description: "20-bit resolution, 400ms integration time"
+        Bits19_200ms:
+          value: 1
+          description: "19-bit resolution, 200ms integration time"
+        Bits18_100ms:
+          value: 2
+          description: "18-bit resolution, 100ms integration time (default)"
+        Bits17_50ms:
+          value: 3
+          description: "17-bit resolution, 50ms integration time"
+        Bits16_25ms:
+          value: 4
+          description: "16-bit resolution, 25ms integration time"
+        Bits13_3_125ms:
+          value: 5
+          description: "13-bit resolution, 3.125ms integration time"
+        Reserved6:
+          value: 6
+          description: "Reserved"
+        Reserved7:
+          value: 7
+          description: "Reserved"
     LS_MEASUREMENT_RATE:
       start: 0
-      end: 2
+      end: 3
       base: uint
       description: "Measurement repeat rate"
+      conversion:
+        name: LsMeasurementRate
+        Ms25:
+          value: 0
+          description: "25ms measurement rate"
+        Ms50:
+          value: 1
+          description: "50ms measurement rate"
+        Ms100:
+          value: 2
+          description: "100ms measurement rate (default)"
+        Ms200:
+          value: 3
+          description: "200ms measurement rate"
+        Ms500:
+          value: 4
+          description: "500ms measurement rate"
+        Ms1000:
+          value: 5
+          description: "1000ms measurement rate"
+        Ms2000_6:
+          value: 6
+          description: "2000ms measurement rate"
+        Ms2000_7:
+          value: 7
+          description: "2000ms measurement rate"
 LS_GAIN:
   type: register
   address: 0x05
@@ -51,9 +103,35 @@ LS_GAIN:
   fields:
     LS_GAIN_RANGE:
       start: 0
-      end: 2
+      end: 3
       base: uint
       description: "Analog gain setting"
+      conversion:
+        name: LsGainRange
+        Gain1x:
+          value: 0
+          description: "1x gain"
+        Gain3x:
+          value: 1
+          description: "3x gain (default)"
+        Gain6x:
+          value: 2
+          description: "6x gain"
+        Gain9x:
+          value: 3
+          description: "9x gain"
+        Gain18x:
+          value: 4
+          description: "18x gain"
+        Reserved5:
+          value: 5
+          description: "Reserved"
+        Reserved6:
+          value: 6
+          description: "Reserved"
+        Reserved7:
+          value: 7
+          description: "Reserved"
 PART_ID:
   type: register
   address: 0x06
@@ -63,12 +141,12 @@ PART_ID:
   fields:
     PART_ID:
       start: 4
-      end: 7
+      end: 8
       base: uint
       description: "Part number ID"
     REVISION_ID:
       start: 0
-      end: 3
+      end: 4
       base: uint
       description: "Revision ID of the component"
 MAIN_STATUS:
@@ -96,72 +174,132 @@ LS_DATA_IR_0:
   size_bits: 8
   reset_value: 0x00
   description: "IR ADC measurement data, LSB"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_IR_1:
   type: register
   address: 0x0B
   size_bits: 8
   reset_value: 0x00
   description: "IR ADC measurement data, middle byte"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_IR_2:
   type: register
   address: 0x0C
   size_bits: 8
   reset_value: 0x00
   description: "IR ADC measurement data, MSB (bits 3:0 only)"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_GREEN_0:
   type: register
   address: 0x0D
   size_bits: 8
   reset_value: 0x00
   description: "ALS/Green ADC measurement data, LSB"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_GREEN_1:
   type: register
   address: 0x0E
   size_bits: 8
   reset_value: 0x00
   description: "ALS/Green ADC measurement data, middle byte"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_GREEN_2:
   type: register
   address: 0x0F
   size_bits: 8
   reset_value: 0x00
   description: "ALS/Green ADC measurement data, MSB (bits 3:0 only)"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_BLUE_0:
   type: register
   address: 0x10
   size_bits: 8
   reset_value: 0x00
   description: "Blue ADC measurement data, LSB"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_BLUE_1:
   type: register
   address: 0x11
   size_bits: 8
   reset_value: 0x00
   description: "Blue ADC measurement data, middle byte"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_BLUE_2:
   type: register
   address: 0x12
   size_bits: 8
   reset_value: 0x00
   description: "Blue ADC measurement data, MSB (bits 3:0 only)"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_RED_0:
   type: register
   address: 0x13
   size_bits: 8
   reset_value: 0x00
   description: "Red ADC measurement data, LSB"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_RED_1:
   type: register
   address: 0x14
   size_bits: 8
   reset_value: 0x00
   description: "Red ADC measurement data, middle byte"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_DATA_RED_2:
   type: register
   address: 0x15
   size_bits: 8
   reset_value: 0x00
   description: "Red ADC measurement data, MSB (bits 3:0 only)"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 INT_CFG:
   type: register
   address: 0x19
@@ -171,9 +309,23 @@ INT_CFG:
   fields:
     LS_INT_SEL:
       start: 4
-      end: 5
+      end: 6
       base: uint
       description: "Light sensor interrupt source channel selection"
+      conversion:
+        name: LsIntSel
+        IR:
+          value: 0
+          description: "IR channel"
+        Green:
+          value: 1
+          description: "ALS channel/Green channel (default)"
+        Red:
+          value: 2
+          description: "Red channel"
+        Blue:
+          value: 3
+          description: "Blue channel"
     LS_VAR_MODE:
       start: 3
       base: bool
@@ -191,45 +343,101 @@ INT_PST:
   fields:
     LS_PERSIST:
       start: 4
-      end: 6
+      end: 7
       base: uint
       description: "Number of consecutive LS interrupt events before interrupt is asserted"
+      conversion:
+        name: LsPersist
+        Every:
+          value: 0
+          description: "Every LS value out of threshold range (default) asserts an interrupt"
+        Consecutive2:
+          value: 1
+          description: "2 consecutive LS values out of threshold range assert an interrupt"
+        Consecutive3:
+          value: 2
+          description: "3 consecutive LS values out of threshold range assert an interrupt"
+        Consecutive4:
+          value: 3
+          description: "4 consecutive LS values out of threshold range assert an interrupt"
+        Consecutive5:
+          value: 4
+          description: "5 consecutive LS values out of threshold range assert an interrupt"
+        Consecutive6:
+          value: 5
+          description: "6 consecutive LS values out of threshold range assert an interrupt"
+        Consecutive7:
+          value: 6
+          description: "7 consecutive LS values out of threshold range assert an interrupt"
+        Consecutive8:
+          value: 7
+          description: "8 consecutive LS values out of threshold range assert an interrupt"
 LS_THRES_UP_0:
   type: register
   address: 0x21
   size_bits: 8
   reset_value: 0xFF
   description: "LS upper interrupt threshold value, LSB"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_THRES_UP_1:
   type: register
   address: 0x22
   size_bits: 8
   reset_value: 0xFF
   description: "LS upper interrupt threshold value, middle byte"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_THRES_UP_2:
   type: register
   address: 0x23
   size_bits: 8
   reset_value: 0x0F
   description: "LS upper interrupt threshold value, MSB (bits 3:0 only)"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_THRES_LOW_0:
   type: register
   address: 0x24
   size_bits: 8
   reset_value: 0x00
   description: "LS lower interrupt threshold value, LSB"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_THRES_LOW_1:
   type: register
   address: 0x25
   size_bits: 8
   reset_value: 0x00
   description: "LS lower interrupt threshold value, middle byte"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_THRES_LOW_2:
   type: register
   address: 0x26
   size_bits: 8
   reset_value: 0x00
   description: "LS lower interrupt threshold value, MSB (bits 3:0 only)"
+  fields:
+    data:
+      base: uint
+      start: 0
+      end: 8
 LS_THRES_VAR:
   type: register
   address: 0x27
@@ -239,9 +447,35 @@ LS_THRES_VAR:
   fields:
     LS_THRES_VAR:
       start: 0
-      end: 2
+      end: 3
       base: uint
       description: "Variance threshold for variation interrupt mode"
+      conversion:
+        name: LsThresVar
+        Counts8:
+          value: 0
+          description: "LS result varies by 8 counts compared to previous result (default)"
+        Counts16:
+          value: 1
+          description: "LS result varies by 16 counts compared to previous result"
+        Counts32:
+          value: 2
+          description: "LS result varies by 32 counts compared to previous result"
+        Counts64:
+          value: 3
+          description: "LS result varies by 64 counts compared to previous result"
+        Counts128:
+          value: 4
+          description: "LS result varies by 128 counts compared to previous result"
+        Counts256:
+          value: 5
+          description: "LS result varies by 256 counts compared to previous result"
+        Counts512:
+          value: 6
+          description: "LS result varies by 512 counts compared to previous result"
+        Counts1024:
+          value: 7
+          description: "LS result varies by 1024 counts compared to previous result"
 DARK_COUNT_STORAGE_GREEN:
   type: register
   address: 0x29
@@ -254,6 +488,6 @@ DARK_COUNT_STORAGE_GREEN:
       description: "0: DARK_COUNT_GREEN is not valid, 1: DARK_COUNT_GREEN is valid"
     DARK_COUNT_GREEN:
       start: 0
-      end: 2
+      end: 3
       base: uint
       description: "Dark count of green channel tested at 400ms and 18x gain"
