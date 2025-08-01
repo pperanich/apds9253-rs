@@ -190,10 +190,7 @@ pub struct Apds9253<I2C> {
     current_resolution: Option<LsResolution>,
 }
 
-impl<I2C, E> Apds9253<I2C>
-where
-    I2C: I2c<Error = E>,
-{
+impl<I2C> Apds9253<I2C> {
     /// Create a new APDS-9253 driver instance
     pub fn new(i2c: I2C) -> Self {
         Self {
@@ -202,6 +199,27 @@ where
             current_resolution: None,
         }
     }
+
+    /// Get the recommended measurement delay time based on current resolution
+    /// Returns the delay in milliseconds that should be used between enabling the sensor
+    /// and reading data for accurate measurements
+    pub fn get_measurement_delay_ms(&self) -> u32 {
+        match self.current_resolution.unwrap_or(LsResolution::Bits18100Ms) {
+            LsResolution::Bits133125Ms => 4,  // 3.125ms
+            LsResolution::Bits1625Ms => 30,   // 25ms
+            LsResolution::Bits1750Ms => 55,   // 50ms
+            LsResolution::Bits18100Ms => 105, // 100ms
+            LsResolution::Bits19200Ms => 205, // 200ms
+            LsResolution::Bits20400Ms => 405, // 400ms
+            _ => 105,                         // Default to 100ms
+        }
+    }
+}
+
+impl<I2C, E> Apds9253<I2C>
+where
+    I2C: I2c<Error = E>,
+{
     /// Initialize the sensor with default settings
     pub fn init(&mut self) -> Result<(), Error<E>> {
         // Verify device ID
@@ -544,21 +562,6 @@ where
             .main_ctrl()
             .modify(|reg| reg.set_sai_ls(enable))?;
         Ok(())
-    }
-
-    /// Get the recommended measurement delay time based on current resolution
-    /// Returns the delay in milliseconds that should be used between enabling the sensor
-    /// and reading data for accurate measurements
-    pub fn get_measurement_delay_ms(&self) -> u32 {
-        match self.current_resolution.unwrap_or(LsResolution::Bits18100Ms) {
-            LsResolution::Bits133125Ms => 4,  // 3.125ms
-            LsResolution::Bits1625Ms => 30,   // 25ms
-            LsResolution::Bits1750Ms => 55,   // 50ms
-            LsResolution::Bits18100Ms => 105, // 100ms
-            LsResolution::Bits19200Ms => 205, // 200ms
-            LsResolution::Bits20400Ms => 405, // 400ms
-            _ => 105,                         // Default to 100ms
-        }
     }
 
     /// Get a reference to the underlying device for advanced operations
