@@ -233,11 +233,6 @@ where
             });
         }
 
-        // Reset the device
-        self.device
-            .main_ctrl()
-            .modify(|reg| reg.set_sw_reset(true))?;
-
         // Set default configuration
         self.set_gain(LsGainRange::Gain3X)?;
         self.set_resolution(LsResolution::Bits18100Ms)?;
@@ -587,12 +582,6 @@ where
                 found: part_id,
             });
         }
-
-        // Reset the device
-        self.device
-            .main_ctrl()
-            .modify_async(|reg| reg.set_sw_reset(true))
-            .await?;
 
         // Set default configuration
         self.set_gain_async(LsGainRange::Gain3X).await?;

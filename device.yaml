@@ -135,6 +135,7 @@ LS_GAIN:
 PART_ID:
   type: register
   address: 0x06
+  access: RO
   size_bits: 8
   reset_value: 0xC2
   description: "Part number ID and revision ID"
