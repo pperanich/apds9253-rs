@@ -190,6 +190,45 @@ pub struct Apds9253<I2C> {
     current_resolution: Option<LsResolution>,
 }
 
+/// Calculate color temperature from RGB data (standalone function)
+///
+/// Uses CIE 1931 XYZ transformation and McCamy's approximation.
+/// Returns `None` if RGB values are all zero or produce degenerate results.
+pub fn calculate_color_temperature(rgb: &RgbData) -> Option<ColorData> {
+    if rgb.red == 0 || rgb.green == 0 || rgb.blue == 0 {
+        return None;
+    }
+
+    // Convert to floating point for calculations
+    let r = rgb.red as f32;
+    let g = rgb.green as f32;
+    let b = rgb.blue as f32;
+
+    // Calculate CIE 1931 XYZ values (simplified transformation)
+    let x = 0.4124 * r + 0.3576 * g + 0.1805 * b;
+    let y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    let z = 0.0193 * r + 0.1192 * g + 0.9505 * b;
+
+    let sum = x + y + z;
+    if sum == 0.0 {
+        return None;
+    }
+
+    // Calculate chromaticity coordinates
+    let x_chrom = x / sum;
+    let y_chrom = y / sum;
+
+    // McCamy's approximation for CCT
+    let n = (x_chrom - 0.3320) / (0.1858 - y_chrom);
+    let cct = 449.0 * libm::powf(n, 3.0) + 3525.0 * libm::powf(n, 2.0) + 6823.3 * n + 5520.33;
+
+    Some(ColorData {
+        cct: cct.max(1000.0).min(25000.0) as u16, // Clamp to reasonable range
+        x: x_chrom,
+        y: y_chrom,
+    })
+}
+
 impl<I2C> Apds9253<I2C> {
     /// Create a new APDS-9253 driver instance
     pub fn new(i2c: I2C) -> Self {
@@ -213,6 +252,13 @@ impl<I2C> Apds9253<I2C> {
             LsResolution::Bits20400Ms => 405, // 400ms
             _ => 105,                         // Default to 100ms
         }
+    }
+
+    /// Calculate color temperature from RGB data
+    ///
+    /// Convenience method that delegates to the standalone [`calculate_color_temperature`] function.
+    pub fn calculate_color_temperature(&self, rgb: &RgbData) -> Option<ColorData> {
+        calculate_color_temperature(rgb)
     }
 }
 
@@ -413,42 +459,6 @@ where
         let lux = rgb.green as f32 * lux_per_count;
 
         Ok(lux)
-    }
-
-    /// Calculate color temperature from RGB data
-    pub fn calculate_color_temperature(&self, rgb: &RgbData) -> Result<ColorData, Error<E>> {
-        if rgb.red == 0 || rgb.green == 0 || rgb.blue == 0 {
-            return Err(Error::InvalidConfig("Zero RGB values"));
-        }
-
-        // Convert to floating point for calculations
-        let r = rgb.red as f32;
-        let g = rgb.green as f32;
-        let b = rgb.blue as f32;
-
-        // Calculate CIE 1931 XYZ values (simplified transformation)
-        let x = 0.4124 * r + 0.3576 * g + 0.1805 * b;
-        let y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        let z = 0.0193 * r + 0.1192 * g + 0.9505 * b;
-
-        let sum = x + y + z;
-        if sum == 0.0 {
-            return Err(Error::InvalidConfig("Zero XYZ sum"));
-        }
-
-        // Calculate chromaticity coordinates
-        let x_chrom = x / sum;
-        let y_chrom = y / sum;
-
-        // McCamy's approximation for CCT
-        let n = (x_chrom - 0.3320) / (0.1858 - y_chrom);
-        let cct = 449.0 * libm::powf(n, 3.0) + 3525.0 * libm::powf(n, 2.0) + 6823.3 * n + 5520.33;
-
-        Ok(ColorData {
-            cct: cct.max(1000.0).min(25000.0) as u16, // Clamp to reasonable range
-            x: x_chrom,
-            y: y_chrom,
-        })
     }
 
     /// Get the device part ID and revision
