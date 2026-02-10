@@ -112,6 +112,29 @@ pub use ll::{LsGainRange, LsIntSel, LsMeasurementRate, LsPersist, LsResolution, 
 /// I2C address of the APDS-9253 sensor
 pub const I2C_ADDRESS: u8 = ll::I2C_ADDRESS;
 
+/// Start address of the LS data registers (LS_DATA_IR_0)
+const LS_DATA_START_ADDR: u8 = 0x0A;
+
+/// Parse a 12-byte block read buffer (registers 0x0A-0x15) into RgbData.
+///
+/// Each channel occupies 3 consecutive bytes as a 20-bit LE value:
+///   - Bytes 0-2:  IR    (0x0A-0x0C)
+///   - Bytes 3-5:  Green (0x0D-0x0F)
+///   - Bytes 6-8:  Blue  (0x10-0x12)
+///   - Bytes 9-11: Red   (0x13-0x15)
+fn parse_rgb_block(buf: &[u8; 12]) -> RgbData {
+    let ir = (buf[0] as u32) | ((buf[1] as u32) << 8) | (((buf[2] as u32) & 0x0F) << 16);
+    let green = (buf[3] as u32) | ((buf[4] as u32) << 8) | (((buf[5] as u32) & 0x0F) << 16);
+    let blue = (buf[6] as u32) | ((buf[7] as u32) << 8) | (((buf[8] as u32) & 0x0F) << 16);
+    let red = (buf[9] as u32) | ((buf[10] as u32) << 8) | (((buf[11] as u32) & 0x0F) << 16);
+    RgbData {
+        red,
+        green,
+        blue,
+        ir,
+    }
+}
+
 /// RGB and IR measurement data
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RgbData {
@@ -335,55 +358,48 @@ where
         Ok(status.ls_data_status())
     }
 
-    /// Read raw RGB and IR data using consolidated multi-byte registers
+    /// Read raw RGB and IR data using a single atomic I2C block read
+    ///
+    /// Checks for data readiness first, then reads all 4 channels (IR, Green,
+    /// Blue, Red) in a single 12-byte I2C transaction from registers 0x0A-0x15.
+    /// This keeps the device's data register range locked for the entire read,
+    /// ensuring all channels come from the same measurement cycle.
+    ///
+    /// **Note:** Checking data readiness reads the MAIN_STATUS register, which
+    /// also clears the interrupt status and power-on status flags as a side effect.
     pub fn read_rgb_data(&mut self) -> Result<RgbData, Error<E>> {
-        // Check if data is ready
         if !self.is_data_ready()? {
             return Err(Error::NotReady);
         }
 
-        // Read IR data (20-bit value from 24-bit register)
-        let ir = self.device.ls_data_ir().read()?.ir_counts();
+        // Single block read of all 4 channels (12 bytes from 0x0A through 0x15).
+        // The device locks the register range 0x07-0x18 for the duration of a
+        // read within it, guaranteeing data consistency across channels.
+        let mut buf = [0u8; 12];
+        self.device
+            .interface()
+            .i2c
+            .write_read(ll::I2C_ADDRESS, &[LS_DATA_START_ADDR], &mut buf)
+            .map_err(Error::I2c)?;
 
-        // Read Green data (20-bit value from 24-bit register)
-        let green = self.device.ls_data_green().read()?.green_counts();
-
-        // Read Blue data (20-bit value from 24-bit register)
-        let blue = self.device.ls_data_blue().read()?.blue_counts();
-
-        // Read Red data (20-bit value from 24-bit register)
-        let red = self.device.ls_data_red().read()?.red_counts();
-
-        Ok(RgbData {
-            red,
-            green,
-            blue,
-            ir,
-        })
+        Ok(parse_rgb_block(&buf))
     }
 
-    /// Read raw RGB and IR data optimized for performance
+    /// Read raw RGB and IR data using a single atomic I2C block read,
+    /// skipping the data-ready check for lower latency
     ///
-    /// This method attempts to read all channels efficiently. Due to device-driver's
-    /// abstraction, individual register reads are used but with optimized field access.
-    /// For maximum performance in critical applications, consider using the device()
-    /// method to access lower-level operations.
+    /// The caller must ensure data is ready before calling this method
+    /// (e.g., by calling [`is_data_ready()`](Self::is_data_ready) or waiting
+    /// for the appropriate measurement delay).
     pub fn read_rgb_data_fast(&mut self) -> Result<RgbData, Error<E>> {
-        // Batch read all data registers for better I2C efficiency
-        // Note: With device-driver framework, this still translates to individual register reads
-        // but with optimized register access patterns
+        let mut buf = [0u8; 12];
+        self.device
+            .interface()
+            .i2c
+            .write_read(ll::I2C_ADDRESS, &[LS_DATA_START_ADDR], &mut buf)
+            .map_err(Error::I2c)?;
 
-        let ir = self.device.ls_data_ir().read()?.ir_counts();
-        let green = self.device.ls_data_green().read()?.green_counts();
-        let blue = self.device.ls_data_blue().read()?.blue_counts();
-        let red = self.device.ls_data_red().read()?.red_counts();
-
-        Ok(RgbData {
-            red,
-            green,
-            blue,
-            ir,
-        })
+        Ok(parse_rgb_block(&buf))
     }
 
     /// Calculate lux from RGB data using datasheet-specified coefficients
@@ -549,14 +565,24 @@ where
     }
 
     /// Perform software reset
+    ///
+    /// Per the datasheet, setting SW_RESET=1 triggers an immediate reset and
+    /// the I2C write is NOT acknowledged. The resulting NACK is expected and
+    /// ignored. Cached gain/resolution state is cleared since the device
+    /// returns to power-on defaults.
     pub fn software_reset(&mut self) -> Result<(), Error<E>> {
-        self.device
-            .main_ctrl()
-            .modify(|reg| reg.set_sw_reset(true))?;
-
-        // Clear cached state after reset
+        // Clear cached state before the write since the device will reset
+        // immediately and NACK, preventing any code after the write from running
+        // via the `?` operator.
         self.current_gain = None;
         self.current_resolution = None;
+
+        // The device resets immediately upon receiving SW_RESET=1 and does NOT
+        // ACK the I2C write. We ignore the expected NACK error.
+        let _ = self
+            .device
+            .main_ctrl()
+            .write(|reg| reg.set_sw_reset(true));
         Ok(())
     }
 
@@ -658,36 +684,26 @@ where
         Ok(status.ls_data_status())
     }
 
-    /// Read raw RGB and IR data using consolidated multi-byte registers (async version)
+    /// Read raw RGB and IR data using a single atomic I2C block read (async version)
+    ///
+    /// See [`read_rgb_data`](Self::read_rgb_data) for details on atomicity guarantees.
+    ///
+    /// **Note:** Checking data readiness reads the MAIN_STATUS register, which
+    /// also clears the interrupt status and power-on status flags as a side effect.
     pub async fn read_rgb_data_async(&mut self) -> Result<RgbData, Error<E>> {
-        // Check if data is ready
         if !self.is_data_ready_async().await? {
             return Err(Error::NotReady);
         }
 
-        // Read IR data (20-bit value from 24-bit register)
-        let ir = self.device.ls_data_ir().read_async().await?.ir_counts();
+        let mut buf = [0u8; 12];
+        self.device
+            .interface()
+            .i2c
+            .write_read(ll::I2C_ADDRESS, &[LS_DATA_START_ADDR], &mut buf)
+            .await
+            .map_err(Error::I2c)?;
 
-        // Read Green data (20-bit value from 24-bit register)
-        let green = self
-            .device
-            .ls_data_green()
-            .read_async()
-            .await?
-            .green_counts();
-
-        // Read Blue data (20-bit value from 24-bit register)
-        let blue = self.device.ls_data_blue().read_async().await?.blue_counts();
-
-        // Read Red data (20-bit value from 24-bit register)
-        let red = self.device.ls_data_red().read_async().await?.red_counts();
-
-        Ok(RgbData {
-            red,
-            green,
-            blue,
-            ir,
-        })
+        Ok(parse_rgb_block(&buf))
     }
 
     /// Calculate lux from RGB data using datasheet-specified coefficients (async version)

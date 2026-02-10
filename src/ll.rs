@@ -50,11 +50,13 @@ impl<I2cTrait: I2c> device_driver::RegisterInterface for DeviceInterface<I2cTrai
         _size_bits: u32,
         data: &[u8],
     ) -> Result<(), Self::Error> {
-        let mut buf = [0u8; 2];
+        // Max register size is 24 bits (3 bytes) + 1 address byte = 4 bytes
+        let mut buf = [0u8; 4];
         buf[0] = address;
-        buf[1] = data[0];
+        let len = data.len();
+        buf[1..1 + len].copy_from_slice(data);
         self.i2c
-            .write(I2C_ADDRESS, &buf)
+            .write(I2C_ADDRESS, &buf[..1 + len])
             .map_err(DeviceInterfaceError::I2c)
     }
 }
@@ -84,11 +86,13 @@ impl<I2cTrait: embedded_hal_async::i2c::I2c> device_driver::AsyncRegisterInterfa
         _size_bits: u32,
         data: &[u8],
     ) -> Result<(), Self::Error> {
-        let mut buf = [0u8; 2];
+        // Max register size is 24 bits (3 bytes) + 1 address byte = 4 bytes
+        let mut buf = [0u8; 4];
         buf[0] = address;
-        buf[1] = data[0];
+        let len = data.len();
+        buf[1..1 + len].copy_from_slice(data);
         self.i2c
-            .write(I2C_ADDRESS, &buf)
+            .write(I2C_ADDRESS, &buf[..1 + len])
             .await
             .map_err(DeviceInterfaceError::I2c)
     }
